@@ -93,12 +93,13 @@ impl Ed25519NoteVerifier {
 
 /// A collection of known verifiers for signature verification.
 ///
-/// Build one at startup from your trusted vkey strings, then pass it to
-/// `Note.verify()` for each incoming checkpoint.
+/// Build one at startup from your trusted vkey strings, then call `.build()`
+/// to finalize. Pass the built list to `Note.verify()` for each incoming checkpoint.
 #[wasm_bindgen]
 pub struct VerifierList {
-    // VerifierList::new() takes ownership, so we accumulate here for JS add-one-at-a-time usage.
-    pending: Vec<Box<dyn signed_note::NoteVerifier>>,
+    // Accumulate verifiers here until build() is called, since VerifierList::new()
+    // takes ownership and we need to add them one at a time from JS.
+    pending: Option<Vec<Box<dyn signed_note::NoteVerifier>>>,
     inner: signed_note::VerifierList,
 }
 
@@ -107,21 +108,33 @@ impl VerifierList {
     #[wasm_bindgen(constructor)]
     pub fn new() -> VerifierList {
         VerifierList {
-            pending: Vec::new(),
+            pending: Some(Vec::new()),
             inner: signed_note::VerifierList::new(Vec::new()),
         }
     }
 
     /// Add an Ed25519 verifier to the list. Call this for each trusted vkey.
     ///
-    /// After adding all verifiers, the list is ready to pass to `Note.verify()`.
-    /// Note: this consumes the verifier (it cannot be reused after adding).
+    /// Must be called before `.build()`. Consumes the verifier.
     #[wasm_bindgen(js_name = "addEd25519")]
-    pub fn add_ed25519(&mut self, v: Ed25519NoteVerifier) {
-        self.pending.push(Box::new(v.inner));
-        // Rebuild each time, fine for 2-3 verifiers at startup.
-        let all: Vec<Box<dyn signed_note::NoteVerifier>> = self.pending.drain(..).collect();
-        self.inner = signed_note::VerifierList::new(all);
+    pub fn add_ed25519(&mut self, v: Ed25519NoteVerifier) -> Result<(), JsValue> {
+        let pending = self
+            .pending
+            .as_mut()
+            .ok_or_else(|| JsValue::from_str("cannot add verifiers after build()"))?;
+        pending.push(Box::new(v.inner));
+        Ok(())
+    }
+
+    /// Finalize the verifier list. Must be called after adding all verifiers
+    /// and before passing to `Note.verify()`.
+    pub fn build(&mut self) -> Result<(), JsValue> {
+        let pending = self
+            .pending
+            .take()
+            .ok_or_else(|| JsValue::from_str("build() already called"))?;
+        self.inner = signed_note::VerifierList::new(pending);
+        Ok(())
     }
 }
 
