@@ -18,6 +18,10 @@ release = false
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
 
+[features]
+default = ["x509"]
+x509 = ["dep:x509_util"]
+
 [lib]
 crate-type = ["rlib"]
 
@@ -35,4 +39,4 @@ sha2.workspace = true
 signed_note.workspace = true
 thiserror.workspace = true
 url.workspace = true
-x509_util.workspace = true
+x509_util = { workspace = true, optional = true }
