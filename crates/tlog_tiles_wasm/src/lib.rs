@@ -111,8 +111,7 @@ pub fn verify_consistency_proof(
     let mut new_h = [0u8; 32];
     new_h.copy_from_slice(new_root);
 
-    // tlog_tiles::verify_consistency_proof takes (proof, n, root_hash, m, m_hash)
-    // where n=new_size, root_hash=new_root, m=old_size, m_hash=old_root.
+    // Underlying API: (proof, n=new_size, root_hash=new_root, m=old_size, m_hash=old_root)
     tlog_tiles::verify_consistency_proof(
         &proof,
         new_size,

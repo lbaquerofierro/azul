@@ -97,16 +97,13 @@ impl Ed25519NoteVerifier {
 /// `Note.verify()` for each incoming checkpoint.
 #[wasm_bindgen]
 pub struct VerifierList {
-    // We accumulate verifiers here, then move them into a signed_note::VerifierList
-    // on first use. This is because signed_note::VerifierList takes ownership of
-    // the verifiers and we need to add them one at a time from JS.
+    // VerifierList::new() takes ownership, so we accumulate here for JS add-one-at-a-time usage.
     pending: Vec<Box<dyn signed_note::NoteVerifier>>,
     inner: signed_note::VerifierList,
 }
 
 #[wasm_bindgen]
 impl VerifierList {
-    /// Create an empty verifier list.
     #[wasm_bindgen(constructor)]
     pub fn new() -> VerifierList {
         VerifierList {
@@ -122,8 +119,7 @@ impl VerifierList {
     #[wasm_bindgen(js_name = "addEd25519")]
     pub fn add_ed25519(&mut self, v: Ed25519NoteVerifier) {
         self.pending.push(Box::new(v.inner));
-        // Rebuild the inner VerifierList each time. This is fine for startup-time
-        // construction with a small number of verifiers (2-3 per the spec).
+        // Rebuild each time, fine for 2-3 verifiers at startup.
         let all: Vec<Box<dyn signed_note::NoteVerifier>> = self.pending.drain(..).collect();
         self.inner = signed_note::VerifierList::new(all);
     }
