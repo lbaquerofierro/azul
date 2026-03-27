@@ -60,12 +60,10 @@ impl Note {
     }
 }
 
-/// Result of verifying a note's signatures.
 #[wasm_bindgen]
 pub struct VerifyResult {
-    /// Number of signatures verified by a known verifier.
     pub verified_count: usize,
-    /// Number of signatures from unknown verifiers (ignored, not an error).
+    /// Signatures from unknown verifiers. Not an error, just ignored.
     pub unverified_count: usize,
 }
 
@@ -80,8 +78,6 @@ pub struct Ed25519NoteVerifier {
 
 #[wasm_bindgen]
 impl Ed25519NoteVerifier {
-    /// Construct a verifier from an encoded verifier key string.
-    ///
     /// Example vkey: `"transparency.dev/google-ct+af032437+ATj4kNR6..."`
     #[wasm_bindgen(constructor)]
     pub fn new(encoded_vkey: &str) -> Result<Ed25519NoteVerifier, JsValue> {
@@ -132,8 +128,7 @@ impl VerifierList {
         Ok(())
     }
 
-    /// Finalize the verifier list. Must be called after adding all verifiers
-    /// and before passing to `Note.verify()`.
+    /// Must be called after adding all verifiers and before `Note.verify()`.
     pub fn build(&mut self) -> Result<(), JsValue> {
         let pending = self
             .pending
@@ -155,9 +150,7 @@ pub fn compute_key_id(name: &str, key: &[u8]) -> Result<u32, JsValue> {
     Ok(signed_note::compute_key_id(&key_name, key))
 }
 
-/// Construct an encoded Ed25519 verifier key string from a name and public key.
-///
-/// Returns a vkey string in the format: `<name>+<hex_key_id>+<base64(0x01 || pubkey)>`
+/// Returns a vkey string: `<name>+<hex_key_id>+<base64(0x01 || pubkey)>`
 #[wasm_bindgen(js_name = "newEncodedEd25519VerifierKey")]
 pub fn new_encoded_ed25519_verifier_key(name: &str, public_key: &[u8]) -> Result<String, JsValue> {
     if public_key.len() != 32 {
