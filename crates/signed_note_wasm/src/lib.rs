@@ -103,6 +103,12 @@ pub struct VerifierList {
     inner: signed_note::VerifierList,
 }
 
+impl Default for VerifierList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[wasm_bindgen]
 impl VerifierList {
     #[wasm_bindgen(constructor)]

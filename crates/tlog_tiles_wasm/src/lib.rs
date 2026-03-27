@@ -90,7 +90,7 @@ pub fn verify_consistency_proof(
             new_root.len()
         )));
     }
-    if proof_hashes.len() % 32 != 0 {
+    if !proof_hashes.len().is_multiple_of(32) {
         return Err(JsValue::from_str(&format!(
             "proof_hashes length must be a multiple of 32, got {}",
             proof_hashes.len()
